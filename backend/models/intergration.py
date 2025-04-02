@@ -20,5 +20,5 @@ class Integration:
         return {
             "platform": data["platform"],
             "status": data["status"],
-            "createdAt": data["created_at"].isoformat()
+            "createdAt": data["created_at"].isoformat() if isinstance(data["created_at"], datetime) else data["created_at"]
         }

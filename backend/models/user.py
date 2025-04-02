@@ -17,5 +17,5 @@ class User:
     def from_dict(data):
         return {
             "email": data["email"],
-            "created_at": data["created_at"]
+            "createdAt": data["created_at"].isoformat() if isinstance(data["created_at"], datetime) else data["created_at"]
         }

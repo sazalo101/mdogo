@@ -1,16 +1,10 @@
-import sys
-import os
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-
-# Ensure the models directory is in the Python module search path
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
-# This file marks the models directory as a Python package.
-from models.intergration import Integration
-from app import db
+from models.integration import Integration
+from __init__ import db  
 
 integrations_bp = Blueprint('integrations', __name__)
+
 
 VALID_PLATFORMS = ['jiji', 'jumia', 'kilimall', 'alibaba', 'amazon']
 
@@ -33,6 +27,6 @@ def integrate_marketplace(platform):
 @jwt_required()
 def get_integrations():
     email = get_jwt_identity()
-    user_integrations = db.integrations.find({"user_email": email})
-    return jsonify([Integration.from_dict(integration) | {"_id": str(integration["_id"])} 
-                   for integration in user_integrations]), 200
+    user_integrations = list(db.integrations.find({"user_email": email}))
+    # Fix the dictionary update syntax
+    return jsonify([Integration.from_dict(integration) for integration in user_integrations]), 200

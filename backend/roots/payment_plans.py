@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from models.payment_plan import PaymentPlan
-from app import db
+from __init__ import db 
 
 payment_plans_bp = Blueprint('payment_plans', __name__)
 
@@ -18,16 +18,15 @@ def search():
     }).limit(10)
     
     return jsonify({
-        "results": [dict(plan, **{"_id": str(plan["_id"]), "createdAt": plan["created_at"].isoformat()})
-                   for plan in results]
+        "results": [PaymentPlan.from_dict(plan) for plan in results]
     }), 200
 
 @payment_plans_bp.route('/payment-plans', methods=['GET'])
 @jwt_required()
 def get_payment_plans():
     email = get_jwt_identity()
-    plans = db.payment_plans.find({"user_email": email})
-    return jsonify([PaymentPlan.from_dict(plan) | {"_id": str(plan["_id"])} for plan in plans]), 200
+    plans = list(db.payment_plans.find({"user_email": email}))
+    return jsonify([PaymentPlan.from_dict(plan) for plan in plans]), 200
 
 @payment_plans_bp.route('/payment-plan', methods=['POST'])
 @jwt_required()
