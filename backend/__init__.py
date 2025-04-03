@@ -1,37 +1,35 @@
 from flask import Flask
-from flask_pymongo import PyMongo
+from pymongo import MongoClient
 from flask_bcrypt import Bcrypt
 from flask_jwt_extended import JWTManager
 
 # Initialize Flask extensions
-mongo = PyMongo()
 bcrypt = Bcrypt()
 jwt = JWTManager()
 db = None
+mongo_client = None
 
 def create_app(config_object):
     app = Flask(__name__)
     app.config.from_object(config_object)
     
-    # Configure MongoDB directly rather than using URI
-    # Flask-PyMongo configuration options
-    app.config["MONGO_HOST"] = config_object.MONGO_HOST
-    app.config["MONGO_PORT"] = config_object.MONGO_PORT
-    app.config["MONGO_DBNAME"] = config_object.MONGO_DBNAME
+    # Initialize MongoDB client directly with pymongo
+    global mongo_client, db
     
-    # Set auth params only if credentials are provided
-    if config_object.MONGO_USERNAME and config_object.MONGO_PASSWORD:
-        app.config["MONGO_USERNAME"] = config_object.MONGO_USERNAME
-        app.config["MONGO_PASSWORD"] = config_object.MONGO_PASSWORD
+    # Connect to MongoDB directly
+    mongo_client = MongoClient(
+        host=config_object.MONGO_HOST, 
+        port=config_object.MONGO_PORT,
+        username=config_object.MONGO_USERNAME if config_object.MONGO_USERNAME else None,
+        password=config_object.MONGO_PASSWORD if config_object.MONGO_PASSWORD else None
+    )
     
-    # Initialize extensions with app
-    mongo.init_app(app)
+    # Get database reference
+    db = mongo_client[config_object.MONGO_DBNAME]
+    
+    # Initialize other extensions
     bcrypt.init_app(app)
     jwt.init_app(app)
-    
-    # Set global db reference
-    global db
-    db = mongo.db
     
     # Import and register blueprints
     from roots.auth import auth_bp
